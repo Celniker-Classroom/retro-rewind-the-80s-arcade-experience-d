@@ -1,25 +1,41 @@
-await Canvas();
-world.gravity.y = 10;
+let ball;
+let backgroundImg;
 
-let ball = new Sprite();
-ball.diameter = 50;
-ball.img = '🤪';
+async function main() {
+    // 1. Initialize Canvas first
+    await Canvas();
+    
+    // 2. Load your image safely using await
+    backgroundImg = await loadImage('assets/Background.png');
 
-let groundA = new Sprite();
-groundA.x = -120;
-groundA.width = 220;
-groundA.rotation = 30;
-groundA.physics = STATIC;
+    // 3. Configure the physics world
+    world.gravity.y = 10;
 
-let groundB = new Sprite();
-groundB.x = 120;
-groundB.width = 220;
-groundB.rotation = -30;
-groundB.physics = STATIC;
+    // 4. Create your sprites
+    ball = new Sprite();
+    ball.diameter = 50;
+    ball.img = '🤪🤪🤪🤪';
 
-q5.update = function () {
-	background('skyblue');
-	text('click to jump!', 0, -50);
+    let groundA = new Sprite();
+    groundA.x = -120;
+    groundA.width = 220;
+    groundA.rotation = 30;
+    groundA.physics = STATIC;
 
-	if (mouse.presses()) ball.vel.y = -5;
-};
+    let groundB = new Sprite();
+    groundB.x = 120;
+    groundB.width = 220;
+    groundB.rotation = -30;
+    groundB.physics = STATIC;
+
+    // 5. Define the update loop inside main so it has access to variables
+    q5.update = function () {
+        background(backgroundImg);
+        text('click to jump!', 0, -50);
+
+        if (mouse.presses()) ball.vel.y = -5;
+    };
+}
+
+// Execute the game
+main();
