@@ -1,5 +1,6 @@
-let ball;
+let missileTruck;
 let backgroundImg;
+let missileTruckOrientation = "RIGHT";
 
 async function main() {
     // 1. Initialize Canvas first
@@ -9,32 +10,54 @@ async function main() {
     backgroundImg = await loadImage('assets/Background.png');
 
     // 3. Configure the physics world
-    world.gravity.y = 10;
+    world.gravity.y = 0;
 
     // 4. Create your sprites
-    ball = new Sprite();
-    ball.diameter = 50;
-    ball.img = '🤪🤪🤪🤪';
+    missileTruck = new Sprite();
+    missileTruck.x = 100; // Set initial X
+    missileTruck.y = 330; // Set initial Y 330 is the Ground level
+    missileTruck.diameter = 50;
+    missileTruck.img = await loadImage('assets/missile-truck.png');
+    
+    
 
-    let groundA = new Sprite();
-    groundA.x = -120;
-    groundA.width = 220;
-    groundA.rotation = 30;
-    groundA.physics = STATIC;
 
-    let groundB = new Sprite();
-    groundB.x = 120;
-    groundB.width = 220;
-    groundB.rotation = -30;
-    groundB.physics = STATIC;
 
     // 5. Define the update loop inside main so it has access to variables
-    q5.update = function () {
+    q5.update = function () { // runs 60 times per second
         background(backgroundImg);
-        text('click to jump!', 0, -50);
+        updateMissileTruckOrientation();
+        if (missileTruckOrientation == "LEFT"){
+            missileTruck.scale.x = -1; // Flips the sprite asset left
+        }else{
+            missileTruck.scale.x = 1; // Flips the sprite asset right
+        }
+        // Add friction to stop
+        missileTruck.vel.x *= 0.9;
 
-        if (mouse.presses()) ball.vel.y = -5;
+        //prevents the truck from going out of bounds
+        if (missileTruck.x<-300){ 
+            missileTruck.x = -300;
+        }
+        if (missileTruck.x>600){
+            missileTruck.x = 600;
+        }
     };
+}
+
+function updateMissileTruckOrientation(){
+    if(kb.pressing('left')){
+        console.log("LEFT");
+        missileTruckOrientation = "LEFT";
+        missileTruck.vel.x -= 0.5; // Accelerate left
+        
+    }
+    if(kb.pressing('right')){
+        console.log("RIGHT");
+        missileTruckOrientation = "RIGHT";
+        missileTruck.vel.x += 0.5; // Accelerate right
+    
+    }
 }
 
 // Execute the game
