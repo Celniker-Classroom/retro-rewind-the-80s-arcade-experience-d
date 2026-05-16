@@ -2,6 +2,9 @@ let missileTruck;
 let missile;
 let backgroundImg;
 let missileTruckOrientation = "RIGHT";
+let groundYLevel = (window.screen.height/2)*0.7; // 0.7 makes the missile truck at ground level -1=top of screen, 1=bottom of screen
+let leftTruckBound = (window.screen.width/2)*-0.5; //-1=left of screen, 1=right of screen
+let rightTruckBound = (window.screen.width/2)*0.9;
 
 async function main() {
     // 1. Initialize Canvas first
@@ -16,12 +19,13 @@ async function main() {
     // 4. Create sprites
     missileTruck = new Sprite();
     missileTruck.x = 100; // Set initial X
+    missileTruck.y = groundYLevel; 
     missileTruck.diameter = 50;
     missileTruck.img = loadImage('assets/missile-truck.png');
 
     missile = new Sprite();
     missile.x = 100; // Set initial X
-    missile.y = 200; // 0.86 makes the missile truck at ground level
+    missile.y = missileTruck.y-35; // 0.86 makes the missile truck at ground level
     missile.diameter = 50;
     missile.img = await loadImage('assets/long-range-missile.png');
     
@@ -31,11 +35,12 @@ async function main() {
 
     // 5. Define the update loop inside main so it has access to variables
     q5.update = function () { // runs 60 times per second
-        missileTruck.y = 240; // 0.86 makes the missile truck at ground level
+        
         background(backgroundImg);
         updateMissileTruck();
         updateMissilePosition();
-        console.log("Y height: ", (backgroundImg.height*0.86)/2);
+        console.log("X height: ", window.screen.width);
+        console.log("Y height: ", window.screen.height);
     };
 }
 
@@ -61,11 +66,11 @@ function updateMissileTruck(){
     missileTruck.vel.x *= 0.9;
 
     //prevents the truck from going out of bounds
-    if (missileTruck.x<-300){ 
-        missileTruck.x = -300;
+    if (missileTruck.x<leftTruckBound){ 
+        missileTruck.x = leftTruckBound;
     }
-    if (missileTruck.x>600){
-        missileTruck.x = 600;
+    if (missileTruck.x>rightTruckBound){
+        missileTruck.x = rightTruckBound;
     }
 }
 
