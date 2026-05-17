@@ -7,6 +7,7 @@ let leftTruckBound;
 let rightTruckBound;
 let truckSize;
 let missileSize;
+let isMissileFired = false;
 
 async function main() {
     // 1. Initialize Canvas first
@@ -37,7 +38,7 @@ async function main() {
 
     missile = new Sprite();
     missile.x = 100; // Set initial X
-    missile.y = missileTruck.y-(35*truckSize); // 0.86 makes the missile truck at ground level
+    missile.y = missileTruck.y-(35*truckSize); 
     missile.scale = missileSize;
     missile.diameter = 50;
     missile.img = await loadImage('assets/long-range-missile.png');
@@ -56,9 +57,16 @@ async function main() {
         
         image(backgroundImg, 0, 0, width, height);
         updateMissileTruck();
-        updateMissilePositionAndRotation();
-        console.log("X width: ", width);
-        console.log("Y height: ", height);
+
+        if(isMissileFired){
+            fireMissile();
+        }else{
+            updateMissilePositionAndRotation();
+        }
+        
+        if (kb.presses('space')) {
+            isMissileFired = true;
+        }
     };
 }
 
@@ -66,16 +74,12 @@ function updateMissileTruck(){
     if(kb.pressing('arrowLeft')){
         console.log("LEFT");
         missileTruckOrientation = "LEFT";
-        missileTruck.vel.x -= (0.00025*width); // Accelerate left
-        missile.rotation = -Math.abs(missile.rotation); //changes missile's rotation to match missile truck's orientation
-        
+        missileTruck.vel.x -= (0.00025*width); // Accelerate left        
     }
     if(kb.pressing('arrowRight')){
         console.log("RIGHT");
         missileTruckOrientation = "RIGHT";
-        missileTruck.vel.x += (0.00025*width); // Accelerate right
-        missile.rotation = Math.abs(missile.rotation); //changes missile's rotation to match missile truck's orientation
-    
+        missileTruck.vel.x += (0.00025*width); // Accelerate right    
     }
 
     if (missileTruckOrientation == "LEFT"){
@@ -95,6 +99,9 @@ function updateMissileTruck(){
     }
     missileTruck.scale.y = truckSize;
 }
+
+
+
 
 function updateMissilePositionAndRotation(){
     if(missileTruckOrientation == "RIGHT"){
@@ -134,8 +141,30 @@ function updateMissilePositionAndRotation(){
             missile.rotationSpeed = 0.5;
         }
     }
+
+    if (kb.pressing('arrowLeft')){
+        missile.rotation = -Math.abs(missile.rotation); //changes missile's rotation to match missile truck's orientation
+    }
+    if (kb.pressing('arrowRight')){
+        missile.rotation = Math.abs(missile.rotation); //changes missile's rotation to match missile truck's orientation
+    }
+
     console.log(missile.rotation);
 
+}
+
+function fireMissile(){
+    //set rotation speed to 0 so that the missile does not rotate once its launched
+    missile.rotationSpeed = 0.0;    
+    missile.vel.y = 15;
+    missile.direction = missile.rotation-90;
+    //checks if the missile is at the top of the screen and if it is, it puts the missile back on the truck
+    if(missile.y<(height/2)*-1){
+        isMissileFired = false;
+        missile.y = missileTruck.y-(35*truckSize); 
+        missile.vel.y = 0;
+        missile.rotation = 0;
+    }
 }
 
 // Execute the game
