@@ -56,25 +56,28 @@ async function main() {
         
         image(backgroundImg, 0, 0, width, height);
         updateMissileTruck();
-        updateMissilePosition();
+        updateMissilePositionAndRotation();
         console.log("X width: ", width);
         console.log("Y height: ", height);
     };
 }
 
 function updateMissileTruck(){
-    if(kb.pressing('left')){
+    if(kb.pressing('arrowLeft')){
         console.log("LEFT");
         missileTruckOrientation = "LEFT";
         missileTruck.vel.x -= (0.00025*width); // Accelerate left
+        missile.rotation = -Math.abs(missile.rotation); //changes missile's rotation to match missile truck's orientation
         
     }
-    if(kb.pressing('right')){
+    if(kb.pressing('arrowRight')){
         console.log("RIGHT");
         missileTruckOrientation = "RIGHT";
         missileTruck.vel.x += (0.00025*width); // Accelerate right
+        missile.rotation = Math.abs(missile.rotation); //changes missile's rotation to match missile truck's orientation
     
     }
+
     if (missileTruckOrientation == "LEFT"){
         missileTruck.scale.x = -truckSize; // Flips the sprite asset left
     }else{
@@ -93,12 +96,45 @@ function updateMissileTruck(){
     missileTruck.scale.y = truckSize;
 }
 
-function updateMissilePosition(){
+function updateMissilePositionAndRotation(){
     if(missileTruckOrientation == "RIGHT"){
-        missile.x = missileTruck.x-(100*truckSize);
+        missile.x = missileTruck.x-(50*truckSize);
     }else{
-        missile.x = missileTruck.x+(80*truckSize);
+        missile.x = missileTruck.x+(40*truckSize);
     }
+
+    //update missile rotation
+    missile.rotationSpeed = 0.0;
+    if(kb.pressing('a')){
+        console.log("LEFT");
+        // Set the center of mass to the bottom edge-center of the sprite so the rotation looks more natural
+        missile.centerOfMass = { x: 0, y: missile.halfHeight };
+
+        //check upper and lower bounds for missile rotation
+        if ((missileTruckOrientation=="LEFT" && missile.rotation<-60)||(missileTruckOrientation=="RIGHT" && missile.rotation<0)){
+            missile.rotationSpeed = 0.0;
+            
+        }
+        else{
+            missile.rotationSpeed = -0.5;
+        }
+
+
+        
+    }else if (kb.pressing('d')){
+        // Set the center of mass to the bottom edge-center of the sprite so the rotation looks more natural
+        missile.centerOfMass = { x: 0, y: missile.halfHeight };
+
+        //check upper and lower bounds for missile rotation
+        if ((missileTruckOrientation=="RIGHT" && missile.rotation>60)||(missileTruckOrientation=="LEFT" && missile.rotation>0)){
+            missile.rotationSpeed = 0.0;
+            
+        }
+        else{
+            missile.rotationSpeed = 0.5;
+        }
+    }
+    console.log(missile.rotation);
 
 }
 
