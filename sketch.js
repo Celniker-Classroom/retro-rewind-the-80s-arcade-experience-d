@@ -61,7 +61,7 @@ async function main() {
 
 
     missile.overlaps(missileTruck); //This tells the physics engine to not create physical forces between the missile and missle truck that would push the two sprites apart.
-    spawnEnemyMissile();
+    startWave();
     
     
 
@@ -191,8 +191,9 @@ function spawnEnemyMissile(){
     let missile = new Sprite();
     missile.x = random(-width/2, width/2); // Set initial X
     missile.y = random(-height/2, -height/4); 
-    let cityRightBound = leftTruckBound;
-    let targetX = random(-width/2, cityRightBound);
+    let cityLeftBound = (width/2)*-0.9;
+    let cityRightBound = (width/2)*-0.6;
+    let targetX = random(cityLeftBound, cityRightBound);
     let targetY = groundYLevel;
     missile.scale = missileSize;
     missile.diameter = 50;
@@ -200,7 +201,19 @@ function spawnEnemyMissile(){
     missile.rotation = missile.angleTo(targetX, targetY)+90;
     missile.direction = missile.angleTo(targetX, targetY);
     missile.speed= random(2, 10);
+    missile.rotationLock = true; // Prevents rotation on collision with other enemy missiles
 
+}
+
+function startWave(){
+    waveActive = true;
+    let missileCount = 3 + (2*wave);
+    let delay = 1000; //in milliseconds
+    for(let i = 0; i<missileCount; i++){
+        setTimeout(() => {
+            spawnEnemyMissile();
+        }, i * delay);
+    }
 }
 
 // Execute the game
