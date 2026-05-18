@@ -1,3 +1,18 @@
+let wave = 1;
+let score = 0;
+
+let enemyMissiles = [];
+let explosions = [];
+let supplies = [];
+
+let missilesRemaining = 5;
+let fuelRemaining = 100;
+
+let waveActive = false;
+let waveCooldown = 0;
+
+
+
 let missileTruck;
 let missile;
 let backgroundImg;
@@ -46,7 +61,7 @@ async function main() {
 
 
     missile.overlaps(missileTruck); //This tells the physics engine to not create physical forces between the missile and missle truck that would push the two sprites apart.
-
+    spawnEnemyMissile();
     
     
 
@@ -69,6 +84,11 @@ async function main() {
         }
     };
 }
+
+
+
+
+
 
 function updateMissileTruck(){
     if(kb.pressing('arrowLeft')){
@@ -165,6 +185,22 @@ function fireMissile(){
         missile.vel.y = 0;
         missile.rotation = 0;
     }
+}
+
+function spawnEnemyMissile(){
+    let missile = new Sprite();
+    missile.x = random(-width/2, width/2); // Set initial X
+    missile.y = random(-height/2, -height/4); 
+    let cityRightBound = leftTruckBound;
+    let targetX = random(-width/2, cityRightBound);
+    let targetY = groundYLevel;
+    missile.scale = missileSize;
+    missile.diameter = 50;
+    missile.img = loadImage('assets/long-range-missile.png');
+    missile.rotation = missile.angleTo(targetX, targetY)+90;
+    missile.direction = missile.angleTo(targetX, targetY);
+    missile.speed= random(2, 10);
+
 }
 
 // Execute the game
