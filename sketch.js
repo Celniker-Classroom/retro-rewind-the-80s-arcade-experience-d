@@ -212,15 +212,8 @@ function spawnEnemyMissile(){
     let enemyMissile = new Sprite();
     enemyMissile.x = random(-width/2, width/2); // Set initial X
     enemyMissile.y = random(-height/2, -height/4); 
-
-    let missileTargetingTruckProbability = 25; //out of 100
     let targetX;
-    if(random(1, 100)>missileTargetingTruckProbability){
-        targetX = random(cityLeftBound, cityRightBound);
-    }else{
-        targetX = missileTruck.x;
-    }
-    
+    targetX = random(cityLeftBound, cityRightBound);
     let targetY = groundYLevel;
     enemyMissile.scale = missileSize;
     enemyMissile.diameter = 50;
@@ -237,10 +230,6 @@ function updateEnemyMissiles(){
     for(let i = enemyMissiles.length - 1; i >= 0; i--){
         let enemyMissile = enemyMissiles[i];
         // missile hit ground
-        if(enemyMissile.colliding(missileTruck)){
-            explodeMissile(enemyMissile);
-            stunTruck(); //TODO
-        }
         if(enemyMissile.y > (height/2)*0.7){ // (height/2)*0.7 is little above ground y level
             explodeMissile(enemyMissile);
             enemyMissiles.splice(i, 1);
@@ -260,8 +249,16 @@ function updateEnemyMissiles(){
     }
 
 }
+
 function explodeMissile(missile){
-        missile.delete();
+    let explosion = new Sprite();
+    explosion.x = missile.x;
+    explosion.y = missile.y; 
+    explosion.img = loadImage('assets/explosion.png');
+    missile.delete();
+    setTimeout(() => {
+        explosion.delete();
+    }, 200);
         
 }
 
@@ -275,10 +272,6 @@ function startWave(){
     }
     waveState = "ACTIVE";
     wave++;
-}
-
-function stunTruck(){
-    console.log("Your truck is stunned!");
 }
 
 function gameOver(){
