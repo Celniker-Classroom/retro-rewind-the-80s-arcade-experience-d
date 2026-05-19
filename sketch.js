@@ -241,7 +241,11 @@ function updateEnemyMissiles(){
         }
         if (missile.colliding(enemyMissile)){
             explodeMissile(enemyMissile);
-            enemyMissiles.splice(i, 1);  
+            enemyMissiles.splice(i, 1);
+            isMissileFired=false;
+            missile.y = missileTruck.y-(35*truckSize); 
+            missile.vel.y = 0;
+            missile.rotation = 0;  
         }
     }
     if (waveState == "ACTIVE" && enemyMissiles.length==0){
@@ -250,12 +254,12 @@ function updateEnemyMissiles(){
 
 }
 
-function explodeMissile(missile){
+function explodeMissile(enemyMissile){
     let explosion = new Sprite();
-    explosion.x = missile.x;
-    explosion.y = missile.y; 
+    explosion.x = enemyMissile.x;
+    explosion.y = enemyMissile.y; 
     explosion.img = loadImage('assets/explosion.png');
-    missile.delete();
+    enemyMissile.delete();
     setTimeout(() => {
         explosion.delete();
     }, 200);
