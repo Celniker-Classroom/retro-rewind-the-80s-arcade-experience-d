@@ -1,10 +1,11 @@
-//TODO: make missiles run out, function to randomly spawn supplies, make wave system better, display city health, score, wave #, # of missiles remaining
+//TODO: function to randomly spawn supplies, make wave system better, display city health, score, wave #, # of missiles remaining
 let wave = 1;
 let score = 0;
 let gameState = "TITLESCREEN"; // TITLESCREEN, PLAYING, GAMEOVER
 
 let enemyMissiles = [];
 let supplies = [];
+let maxSupplies = 3;
 
 let missilesRemaining = 5;
 let cityHealth = 100;
@@ -51,6 +52,8 @@ async function main() {
 
     // 5. Define the update loop inside main so it has access to variables
     q5.update = function () { // runs 60 times per second
+        console.log("Missiles Remaining: ", missilesRemaining)
+        console.log("Is Missile Visible? ", missile.visible)
         if (gameState == "TITLESCREEN") {
             drawTitleScreen();
             return;
@@ -75,7 +78,7 @@ async function main() {
         updateMissileTruck();
         updateEnemyMissiles();
 
-        if(isMissileFired){
+        if(isMissileFired && missilesRemaining>0){
             fireMissile();
         }else{
             updateMissilePositionAndRotation();
@@ -87,6 +90,11 @@ async function main() {
 
         if(cityHealth<=0){
             gameState = "GAMEOVER";
+        }
+
+        if(supplies.length>maxSupplies){
+            supplies[0].delete();
+            supplies.shift(); //removes first element from array
         }
     };
 }
@@ -261,6 +269,13 @@ function updateMissilePositionAndRotation(){
         missile.rotation = Math.abs(missile.rotation); //changes missile's rotation to match missile truck's orientation
     }
 
+    //hides missile if you run out of them
+    if(missilesRemaining<=0){
+        missile.visible = false;
+    }else{
+        missile.visible = true;
+    }
+
 
 }
 
@@ -272,6 +287,7 @@ function fireMissile(){
     //checks if the missile is at the top of the screen and if it is, it puts the missile back on the truck
     if(missile.y<(height/2)*-1){
         isMissileFired = false;
+        missilesRemaining -=1;
         missile.y = missileTruck.y-(35*truckSize); 
         missile.vel.y = 0;
         missile.rotation = 0;
@@ -296,6 +312,28 @@ function spawnEnemyMissile(){
 
 }
 
+function spawnAmmo(){
+    let ammo = new Sprite();
+    ammo.x = random(0, width/2); // Set initial X
+    ammo.y = groundYLevel; 
+    // enemyMissile.scale = missileSize;
+    ammo.diameter = 0;
+    ammo.img = loadImage('assets/ammo.png');
+    // enemyMissile.rotationLock = true; // Prevents rotation on collision with other enemy missiles
+    supplies.push(ammo);
+}
+
+function spawnHealth(){
+    let health = new Sprite();
+    health.x = random(0, width/2); // Set initial X
+    health.y = groundYLevel; 
+    // enemyMissile.scale = missileSize;
+    health.diameter = 0;
+    health.img = loadImage('assets/health.png');
+    // enemyMissile.rotationLock = true; // Prevents rotation on collision with other enemy missiles
+    supplies.push(health);
+}
+
 function updateEnemyMissiles(){
     for(let i = enemyMissiles.length - 1; i >= 0; i--){
         let enemyMissile = enemyMissiles[i];
@@ -315,6 +353,7 @@ function updateEnemyMissiles(){
             explodeMissile(enemyMissile);
             enemyMissiles.splice(i, 1);
             isMissileFired=false;
+            missilesRemaining -=1;
             missile.y = missileTruck.y-(35*truckSize); 
             missile.vel.y = 0;
             missile.rotation = 0;  
@@ -346,6 +385,14 @@ function startWave(){
         setTimeout(() => {
             spawnEnemyMissile();
         }, i * delay);
+
+        setTimeout(() => {
+            if(random(1,4)<3){
+                spawnAmmo();
+            }else{
+                spawnHealth();
+            }
+        }, i * delay * 2);
     }
     waveState = "ACTIVE";
     wave++;
