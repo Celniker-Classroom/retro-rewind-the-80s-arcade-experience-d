@@ -1,8 +1,9 @@
+//TODO: make missiles run out, function to randomly spawn supplies, make wave system better, display city health, score, wave #, # of missiles remaining
 let wave = 1;
 let score = 0;
+let gameState = "TITLESCREEN"; // TITLESCREEN, PLAYING, GAMEOVER
 
 let enemyMissiles = [];
-let explosions = [];
 let supplies = [];
 
 let missilesRemaining = 5;
@@ -29,57 +30,37 @@ async function main() {
     // 1. Initialize Canvas first
     await Canvas('1:1');
     
-    
     // 2. Load your image safely using await
     backgroundImg = await loadImage('assets/Background.png');
     groundYLevel = (height/2)*0.78; // 0.78 makes the missile truck at ground level -1=top of screen, 1=bottom of screen
-
 
     leftTruckBound = (width/2)*0; //-1=left of screen, 1=right of screen
     rightTruckBound = (width/2)*0.9;
     cityLeftBound = (width/2)*-0.9;
     cityRightBound = (width/2)*-0.6;
 
-
-
     truckSize = (width/2)*0.001;
     missileSize = (width/2)*0.001;
-    
 
     // 3. Configure the physics world
     
-
     // 4. Create sprites
-    missileTruck = new Sprite();
-    missileTruck.x = 100; // Set initial X
-    missileTruck.y = groundYLevel; 
-    missileTruck.diameter = 300;
-
-
-    
-    missileTruck.img = loadImage('assets/missile-truck.png');
-
-    missile = new Sprite();
-    missile.x = 100; // Set initial X
-    missile.y = missileTruck.y-(35*truckSize); 
-    missile.scale = missileSize;
-    missile.diameter = 50;
-    missile.img = await loadImage('assets/long-range-missile.png');
-
-
-
-    missile.overlaps(missileTruck); //This tells the physics engine to not create physical forces between the missile and missle truck that would push the two sprites apart.
-    
-    
-
-
-    
-
+    initializeSprites();
 
 
 
     // 5. Define the update loop inside main so it has access to variables
     q5.update = function () { // runs 60 times per second
+        if (gameState == "TITLESCREEN") {
+            drawTitleScreen();
+            return;
+        }
+
+        if (gameState == "GAMEOVER") {
+            drawGameOverScreen();
+            return;
+        }
+
 
 
         if(waveState == "COOLDOWN"){
@@ -105,12 +86,101 @@ async function main() {
         }
 
         if(cityHealth<=0){
-            gameOver(); //TODO
+            gameState = "GAMEOVER";
         }
     };
 }
 
+function initializeSprites(){
+    missileTruck = new Sprite();
+    missileTruck.x = 100; // Set initial X
+    missileTruck.y = groundYLevel; 
+    missileTruck.diameter = 300;
+    missileTruck.img = loadImage('assets/missile-truck.png');
 
+    missile = new Sprite();
+    missile.x = 100; // Set initial X
+    missile.y = missileTruck.y-(35*truckSize); 
+    missile.scale = missileSize;
+    missile.diameter = 50;
+    missile.img = loadImage('assets/long-range-missile.png');
+
+
+
+    missile.overlaps(missileTruck); //This tells the physics engine to not create physical forces between the missile and missle truck that would push the two sprites apart.
+}
+
+function drawTitleScreen(){
+    background(0);
+
+    textAlign(CENTER, CENTER);
+
+    fill(255);
+    textSize(width * 0.06);
+    text("Final Interceptor", 0, height * -0.15);
+
+    textSize(width * 0.025);
+    text("Press ENTER to Start", 0, height * 0.05);
+
+    textSize(width * 0.018);
+    text("Arrow Keys = Move Truck", 0, height * 0.18);
+    text("A / D = Aim Missile", 0, height * 0.24);
+    text("SPACE = Fire Missile", 0, height * 0.30);
+
+    if (kb.presses('enter')) {
+        gameState = "PLAYING";
+    }
+}
+
+
+function drawGameOverScreen(){
+    allSprites.delete(); //ensures no sprites are left in the game over screen
+    background(0);
+
+    textAlign(CENTER, CENTER);
+
+    fill(255, 0, 0);
+    textSize(width * 0.07);
+    text("GAME OVER", 0, height * -0.1);
+
+    fill(255);
+    textSize(width * 0.03);
+    text("Final Wave: " + (wave - 1), 0, height * 0.05);
+    text("Score: " + score, 0, height * 0.12);
+
+    textSize(width * 0.02);
+    text("Press ENTER to Restart", 0, height * 0.25);
+
+    if (kb.presses('enter')) {
+        restartGame();
+    }
+}
+
+function restartGame() {
+    wave = 1;
+    score = 0;
+    cityHealth = 100;
+
+    enemyMissiles = [];
+    supplies = [];
+
+    missilesRemaining = 5;
+
+    waveState = "COOLDOWN";
+
+
+    initializeSprites();
+    isMissileFired = false;
+
+    missile.x = missileTruck.x;
+    missile.y = missileTruck.y - (35 * truckSize);
+
+    missile.vel.x = 0;
+    missile.vel.y = 0;
+
+    missile.rotation = 0;
+    gameState = "PLAYING";
+}
 
 
 
@@ -239,6 +309,8 @@ function updateEnemyMissiles(){
             }
 
         }
+
+        //missile collided with player missile: +10 score
         if (missile.colliding(enemyMissile)){
             explodeMissile(enemyMissile);
             enemyMissiles.splice(i, 1);
@@ -246,6 +318,7 @@ function updateEnemyMissiles(){
             missile.y = missileTruck.y-(35*truckSize); 
             missile.vel.y = 0;
             missile.rotation = 0;  
+            score+=10;
         }
     }
     if (waveState == "ACTIVE" && enemyMissiles.length==0){
@@ -278,8 +351,6 @@ function startWave(){
     wave++;
 }
 
-function gameOver(){
-    console.log("Game over!");
-}
+
 // Execute the game
 main();
