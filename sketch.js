@@ -1,4 +1,4 @@
-//TODO: function to randomly spawn supplies, make wave system better, display city health, score, wave #, # of missiles remaining
+//TODO: make wave system better, display city health, score, wave #, # of missiles remaining, add sound effects, make game over and title screen more 80s looking
 let wave = 1;
 let score = 0;
 let gameState = "TITLESCREEN"; // TITLESCREEN, PLAYING, GAMEOVER
@@ -53,7 +53,7 @@ async function main() {
     // 5. Define the update loop inside main so it has access to variables
     q5.update = function () { // runs 60 times per second
         console.log("Missiles Remaining: ", missilesRemaining)
-        console.log("Is Missile Visible? ", missile.visible)
+        console.log("City Health ", cityHealth)
         if (gameState == "TITLESCREEN") {
             drawTitleScreen();
             return;
@@ -65,7 +65,7 @@ async function main() {
         }
 
 
-
+        
         if(waveState == "COOLDOWN"){
             waveState = "STARTING";
             setTimeout(() => {
@@ -77,6 +77,7 @@ async function main() {
         image(backgroundImg, 0, 0, width, height);
         updateMissileTruck();
         updateEnemyMissiles();
+        updateSupplies();
 
         if(isMissileFired && missilesRemaining>0){
             fireMissile();
@@ -93,9 +94,10 @@ async function main() {
         }
 
         if(supplies.length>maxSupplies){
-            supplies[0].delete();
+            supplies[0][1].delete();
             supplies.shift(); //removes first element from array
         }
+        displayInfo();
     };
 }
 
@@ -119,6 +121,7 @@ function initializeSprites(){
 }
 
 function drawTitleScreen(){
+    allSprites.delete();
     background(0);
 
     textAlign(CENTER, CENTER);
@@ -134,9 +137,14 @@ function drawTitleScreen(){
     text("Arrow Keys = Move Truck", 0, height * 0.18);
     text("A / D = Aim Missile", 0, height * 0.24);
     text("SPACE = Fire Missile", 0, height * 0.30);
+    text("Directions:", 0, height * 0.36);
+    textSize(width * 0.009);
+    text("Your objective is to defend the city using your interceptor missiles for as long as possible.", 0, height * 0.39);
+    text("Each wave, missiles spawn as well as powerups you can collect with your truck which randomly appear around the map.", 0, height * 0.42);
+    text("The bigger the missile, the more damage it will deal to your city!", 0, height * 0.45);
 
     if (kb.presses('enter')) {
-        gameState = "PLAYING";
+        restartGame();
     }
 }
 
@@ -165,7 +173,7 @@ function drawGameOverScreen(){
 }
 
 function restartGame() {
-    wave = 1;
+    wave = 0;
     score = 0;
     cityHealth = 100;
 
@@ -243,7 +251,7 @@ function updateMissilePositionAndRotation(){
             
         }
         else{
-            missile.rotationSpeed = -0.5;
+            missile.rotationSpeed = -1;
         }
 
 
@@ -258,7 +266,7 @@ function updateMissilePositionAndRotation(){
             
         }
         else{
-            missile.rotationSpeed = 0.5;
+            missile.rotationSpeed = 1;
         }
     }
 
@@ -295,20 +303,21 @@ function fireMissile(){
 }
 
 function spawnEnemyMissile(){
+    let missileScale = random(0.5, 2); //0.5=small 1=normal, 2=large
     let enemyMissile = new Sprite();
     enemyMissile.x = random(-width/2, width/2); // Set initial X
-    enemyMissile.y = random(-height/2, -height/4); 
+    enemyMissile.y = random(-height, -height/2); 
     let targetX;
     targetX = random(cityLeftBound, cityRightBound);
     let targetY = groundYLevel;
-    enemyMissile.scale = missileSize;
-    enemyMissile.diameter = 50;
+    enemyMissile.scale = missileSize*missileScale;
+    enemyMissile.diameter = 50*missileScale;
     enemyMissile.img = loadImage('assets/long-range-missile.png');
     enemyMissile.rotation = enemyMissile.angleTo(targetX, targetY)+90;
     enemyMissile.direction = enemyMissile.angleTo(targetX, targetY);
-    enemyMissile.speed= random(2, 3);
+    enemyMissile.speed= random(2, 3) * (1/missileScale);
     enemyMissile.rotationLock = true; // Prevents rotation on collision with other enemy missiles
-    enemyMissiles.push(enemyMissile);
+    enemyMissiles.push([missileScale, enemyMissile]);
 
 }
 
@@ -320,7 +329,9 @@ function spawnAmmo(){
     ammo.diameter = 0;
     ammo.img = loadImage('assets/ammo.png');
     // enemyMissile.rotationLock = true; // Prevents rotation on collision with other enemy missiles
-    supplies.push(ammo);
+    supplies.push(["AMMO", ammo]);
+    ammo.overlaps(missileTruck);
+    ammo.overlaps(missile);
 }
 
 function spawnHealth(){
@@ -331,26 +342,28 @@ function spawnHealth(){
     health.diameter = 0;
     health.img = loadImage('assets/health.png');
     // enemyMissile.rotationLock = true; // Prevents rotation on collision with other enemy missiles
-    supplies.push(health);
+    supplies.push(["HEALTH", health]);
+    health.overlaps(missileTruck);
+    health.overlaps(missile);
 }
 
 function updateEnemyMissiles(){
     for(let i = enemyMissiles.length - 1; i >= 0; i--){
         let enemyMissile = enemyMissiles[i];
         // missile hit ground
-        if(enemyMissile.y > (height/2)*0.7){ // (height/2)*0.7 is little above ground y level
-            explodeMissile(enemyMissile);
+        if(enemyMissile[1].y > (height/2)*0.7){ // (height/2)*0.7 is little above ground y level
+            cityHealth-=10 * enemyMissile[0];
+            explodeMissile(enemyMissile[1]);
             enemyMissiles.splice(i, 1);
-            if(enemyMissile.x>cityLeftBound && enemyMissile.x<cityRightBound){
-                cityHealth-=10;
+            if(enemyMissile[1].x>cityLeftBound && enemyMissile[1].x<cityRightBound){
                 console.log("City Health:"+ cityHealth);
             }
 
         }
 
         //missile collided with player missile: +10 score
-        if (missile.colliding(enemyMissile)){
-            explodeMissile(enemyMissile);
+        if (missile.colliding(enemyMissile[1])){
+            explodeMissile(enemyMissile[1]);
             enemyMissiles.splice(i, 1);
             isMissileFired=false;
             missilesRemaining -=1;
@@ -362,6 +375,23 @@ function updateEnemyMissiles(){
     }
     if (waveState == "ACTIVE" && enemyMissiles.length==0){
         waveState = "COOLDOWN";
+    }
+
+}
+
+//function to delete and update stats when missile truck picks up a supply
+function updateSupplies(){
+    for(let i = supplies.length - 1; i >= 0; i--){
+        let supply = supplies[i];
+        //missile truck collided with supply
+        if (missileTruck.colliding(supply[1])){
+            supply[1].delete();
+            if(supply[0]=="AMMO"){
+                missilesRemaining += 1;
+            }else{
+                cityHealth += 10;
+            }
+        }
     }
 
 }
@@ -379,8 +409,8 @@ function explodeMissile(enemyMissile){
 }
 
 function startWave(){
-    let missileCount = 3 + (2*wave);
-    let delay = Math.max(1025-(25*wave), 500); //in milliseconds and spawns faster each wave
+    let missileCount = 2 + wave;
+    let delay = Math.max(2025-(25*wave), 1000); //in milliseconds and spawns faster each wave
     for(let i = 0; i<missileCount; i++){
         setTimeout(() => {
             spawnEnemyMissile();
@@ -396,6 +426,19 @@ function startWave(){
     }
     waveState = "ACTIVE";
     wave++;
+}
+
+function displayInfo(){
+    textAlign(RIGHT);
+
+    fill(255);
+    textSize(width * 0.04);
+    text("SCORE: "+ score, width *-0.2, height * -0.4);
+    text("Wave "+ wave, width *0.2, height * -0.4);
+
+    text("HEALTH:  "+ Math.floor(cityHealth), width *-0.2, height * 0.45);
+    text("Missiles Remaining: "+ missilesRemaining, width *0.5, height * 0.45);
+
 }
 
 
